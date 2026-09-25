@@ -50,6 +50,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -339,10 +340,9 @@ fun Messages(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onVideoClick: (String) -> Unit = {},
 ) {
-    val scope = rememberCoroutineScope()
     Box(modifier = modifier) {
-
         val authorMe = stringResource(id = R.string.author_me)
+        val onAuthorClick = remember(navigateToProfile) { { name: String -> navigateToProfile(name) } }
         LazyColumn(
             reverseLayout = true,
             state = scrollState,
@@ -351,62 +351,62 @@ fun Messages(
                 .testTag(ConversationTestTag)
                 .fillMaxSize(),
         ) {
-            for (index in messages.indices) {
+            itemsIndexed(
+                items = messages,
+                key = { _, content -> content.id },
+                contentType = { _, _ -> "message" },
+            ) { index, content ->
                 val prevAuthor = messages.getOrNull(index - 1)?.author
                 val nextAuthor = messages.getOrNull(index + 1)?.author
-                val content = messages[index]
                 val isFirstMessageByAuthor = prevAuthor != content.author
                 val isLastMessageByAuthor = nextAuthor != content.author
 
                 // Hardcode day dividers for simplicity
                 if (index == messages.size - 1) {
-                    item(key = "header_20_aug", contentType = "header") {
-                        DayHeader("20 Aug")
-                    }
+                    DayHeader("20 Aug")
                 } else if (index == 2) {
-                    item(key = "header_today", contentType = "header") {
-                        DayHeader("Today")
-                    }
+                    DayHeader("Today")
                 }
 
-                item(key = content.id, contentType = "message") {
-                    Message(
-                        onAuthorClick = { name -> navigateToProfile(name) },
-                        msg = content,
-                        isUserMe = content.author == authorMe,
-                        isFirstMessageByAuthor = isFirstMessageByAuthor,
-                        isLastMessageByAuthor = isLastMessageByAuthor,
-                        onVideoClick = onVideoClick,
-                    )
-                }
-            }
-        }
-        // Jump to bottom button shows up when user scrolls past a threshold.
-        // Convert to pixels:
-        val jumpThreshold = with(LocalDensity.current) {
-            JumpToBottomThreshold.toPx()
-        }
-
-        // Show the button if the first visible item is not the first one or if the offset is
-        // greater than the threshold.
-        val jumpToBottomButtonEnabled by remember {
-            derivedStateOf {
-                scrollState.firstVisibleItemIndex != 0 ||
-                    scrollState.firstVisibleItemScrollOffset > jumpThreshold
+                Message(
+                    onAuthorClick = onAuthorClick,
+                    msg = content,
+                    isUserMe = content.author == authorMe,
+                    isFirstMessageByAuthor = isFirstMessageByAuthor,
+                    isLastMessageByAuthor = isLastMessageByAuthor,
+                    onVideoClick = onVideoClick,
+                )
             }
         }
 
-        JumpToBottom(
-            // Only show if the scroller is not at the bottom
-            enabled = jumpToBottomButtonEnabled,
-            onClicked = {
-                scope.launch {
-                    scrollState.animateScrollToItem(0)
-                }
-            },
+        JumpToBottomOverlay(
+            scrollState = scrollState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
+}
+
+@Composable
+private fun JumpToBottomOverlay(scrollState: LazyListState, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    val jumpThreshold = with(LocalDensity.current) {
+        JumpToBottomThreshold.toPx()
+    }
+    val jumpToBottomButtonEnabled by remember {
+        derivedStateOf {
+            scrollState.firstVisibleItemIndex != 0 ||
+                scrollState.firstVisibleItemScrollOffset > jumpThreshold
+        }
+    }
+    JumpToBottom(
+        enabled = jumpToBottomButtonEnabled,
+        onClicked = {
+            scope.launch {
+                scrollState.animateScrollToItem(0)
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable

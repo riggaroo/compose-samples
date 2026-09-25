@@ -76,7 +76,7 @@ abstract class BaseBackdropNode(
     }
 
     override fun onDetach() {
-        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.CINNAMON_BUN) {
+        if (Build.VERSION.SDK_INT >= 36 && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.CINNAMON_BUN) {
             renderNode?.discardDisplayList()
         }
         lastWidth = -1
@@ -89,7 +89,7 @@ abstract class BaseBackdropNode(
     @SuppressLint("NewApi")
     override fun ContentDrawScope.draw() {
         val effect = resolveRenderEffect(this)
-        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.CINNAMON_BUN && effect != null) {
+        if (Build.VERSION.SDK_INT >= 36 && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.CINNAMON_BUN && effect != null) {
             val widthPx = size.width.roundToInt()
             val heightPx = size.height.roundToInt()
 

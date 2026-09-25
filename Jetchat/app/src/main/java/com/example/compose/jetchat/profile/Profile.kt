@@ -103,17 +103,33 @@ fun ProfileScreen(
             }
         }
 
-        val fabExtended by remember { derivedStateOf { scrollState.value == 0 } }
-        ProfileFab(
-            extended = fabExtended,
+        val onFabClicked = remember { { functionalityNotAvailablePopupShown = true } }
+        ScrollReactiveProfileFab(
+            scrollState = scrollState,
             userIsMe = userData.isMe(),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 // Offsets the FAB to compensate for CoordinatorLayout collapsing behaviour
                 .offset(y = ((-100).dp)),
-            onFabClicked = { functionalityNotAvailablePopupShown = true },
+            onFabClicked = onFabClicked,
         )
     }
+}
+
+@Composable
+private fun ScrollReactiveProfileFab(
+    scrollState: ScrollState,
+    userIsMe: Boolean,
+    modifier: Modifier = Modifier,
+    onFabClicked: () -> Unit = {},
+) {
+    val fabExtended by remember { derivedStateOf { scrollState.value == 0 } }
+    ProfileFab(
+        extended = fabExtended,
+        userIsMe = userIsMe,
+        modifier = modifier,
+        onFabClicked = onFabClicked,
+    )
 }
 
 @Composable
